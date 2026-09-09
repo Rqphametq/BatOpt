@@ -475,7 +475,7 @@ if (btnReadme) {
         readmeModal.style.display = 'flex';
         readmeContent.innerHTML = "⏳ Chargement de la documentation...";
         
-    try {
+        try {
             const response = await fetch('README.md');
             if (response.ok) {
                 const text = await response.text();
@@ -483,7 +483,7 @@ if (btnReadme) {
                 if (typeof marked !== 'undefined') {
                     readmeContent.innerHTML = marked.parse(text);
                     
-                    // --- AJOUT DU STYLE ICI ---
+                    // Ajout du style imitant GitHub
                     const style = document.createElement('style');
                     style.innerHTML = `
                         #readme-content { font-size: 15px; line-height: 1.7; color: #334155; }
@@ -500,17 +500,17 @@ if (btnReadme) {
                         #readme-content a:hover { text-decoration: underline; }
                     `;
                     readmeContent.appendChild(style);
-                    // --------------------------
-
                 } else {
                     readmeContent.innerHTML = `<pre style="white-space: pre-wrap;">${text}</pre>`;
                 }
             } else {
-                readmeContent.innerHTML = "<p>❌ Impossible de charger le README depuis GitHub (Erreur réseau ou CORS en local).</p>";
+                readmeContent.innerHTML = "<p>❌ Impossible de charger le README depuis GitHub.</p>";
             }
         } catch(e) {
             readmeContent.innerHTML = "<p>❌ Erreur technique lors du chargement de la documentation.</p>";
         }
+    });
+}
 
 // Gestion de la fermeture
 if (closeReadmeBtn) {
