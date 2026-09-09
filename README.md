@@ -1,4 +1,4 @@
-# ⚡ BatOpt — Simulateur Technico-Économique BESS
+# BatOpt — Simulateur Technico-Économique BESS
 
 **BatOpt** est un outil web qui calcule, pour un bâtiment tertiaire ou industriel donné, si l'installation d'une batterie de stockage (BESS) couplée à du solaire photovoltaïque est rentable — et si oui, quelle taille de batterie choisir.
 
@@ -7,7 +7,7 @@ Il a été conçu pour un usage **avant-vente** : en quelques minutes et sans ou
 > Projet personnel développé pour progresser en "vibe coding" (développement assisté par IA) sur un cas d'usage technique réel, en lien avec mon domaine d'activité (énergies renouvelables / stockage).
 
 
-## 🖥️ Aperçu
+## Aperçu
 
 L'interface se compose de deux zones :
 
@@ -17,7 +17,7 @@ L'interface se compose de deux zones :
 Chaque modification d'un paramètre relance instantanément le calcul.
 
 
-## 🎯 Fonctionnalités
+## Fonctionnalités
 
 ### Dimensionnement interactif
 - Choix du profil de consommation du bâtiment (Supermarché, Atelier/Usine, Bureaux)
@@ -36,7 +36,7 @@ Chaque modification d'un paramètre relance instantanément le calcul.
 - Le résultat est présenté sous forme de graphique comparatif, avec le dimensionnement optimal mis en évidence.
 
 
-## ⚙️ Comment fonctionne le moteur de calcul
+## Comment fonctionne le moteur de calcul
 
 C'est la partie la plus intéressante du projet. Le calcul se déroule en 5 étapes, répétées pour 3 journées types (hiver, mi-saison, été), puis pondérées sur l'année.
 
@@ -67,7 +67,7 @@ Les 3 journées types sont pondérées par leur nombre de jours réels dans l'an
 Le payback (ROI) est le moment où les gains cumulés dépassent le CAPEX initial.
 
 
-## 🌍 Données climatiques
+## Données climatiques
 
 La géolocalisation et la météo utilisent l'API publique **[Open-Meteo](https://open-meteo.com/)**, sans clé d'API :
 - **Géocodage** : conversion du nom de ville saisi en coordonnées GPS.
@@ -76,7 +76,7 @@ La géolocalisation et la météo utilisent l'API publique **[Open-Meteo](https:
 En cas d'indisponibilité de l'API (réseau bloqué, quota atteint), l'application bascule automatiquement sur des courbes d'irradiance synthétiques de secours, pour que la démonstration reste toujours fonctionnelle.
 
 
-## 🧱 Stack technique
+## Stack technique
 
 - **HTML / CSS / JavaScript vanilla** — aucun framework, aucune étape de build
 - **[Chart.js](https://www.chartjs.org/)** — visualisation de la courbe de charge et du graphique d'optimisation
@@ -86,7 +86,7 @@ En cas d'indisponibilité de l'API (réseau bloqué, quota atteint), l'applicati
 
 Choix assumé : pas de framework front, pour rester sur un projet lisible de bout en bout et 100 % statique (déployable sur n'importe quel hébergement de fichiers, sans backend).
 
-## 📁 Structure du projet
+## Structure du projet
 
 ```
 batopt/
@@ -95,7 +95,7 @@ batopt/
 └── script.js    # Moteur de calcul + logique d'interface
 ```
 
-## ⚠️ Limites connues & pistes d'amélioration
+## Limites connues & pistes d'amélioration
 
 En toute transparence, quelques limites assumées du modèle actuel :
 
