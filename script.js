@@ -42,7 +42,6 @@ const cityInput = document.getElementById('city-input');
 const btnSearch = document.getElementById('btn-search-city');
 
 async function searchCity(e) {
-    // 1. On bloque tout rafraîchissement accidentel de la page
     if(e) e.preventDefault(); 
     
     const val = cityInput.value;
@@ -66,14 +65,11 @@ async function searchCity(e) {
             document.getElementById('city-result').innerText = "❌ Ville introuvable.";
         }
     } catch(err) { 
-        console.error("Détail de l'erreur :", err);
-        // 2. FILET DE SÉCURITÉ : Si le réseau ou l'API bloque, on force la simulation quand même !
         document.getElementById('city-result').innerText = `⚠️ Réseau bloqué : Mode démo activé pour "${val}".`;
-        fetchSolarData(); // On lance les calculs avec la ville précédente ou par défaut
+        fetchSolarData(); 
     }
 }
 
-// On s'assure de transmettre l'événement "e" pour le bloquer
 btnSearch.addEventListener('click', (e) => searchCity(e));
 cityInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') searchCity(e);
@@ -107,7 +103,7 @@ function loadLocalEnedisData() {
     if(irradianceSeasons && irradianceSeasons.summer) runSimulation();
 }
 
-// --- 3. API SOLAIRE (CALCUL SIMULTANÉ DES 3 SAISONS SUR 5 ANS) ---
+// --- 3. API SOLAIRE ---
 async function fetchSolarData() {
     const statusLabel = document.getElementById('data-source-status');
     statusLabel.innerText = `⏳ Analyse climatologique annuelle en cours (5 ans)...`;
@@ -145,7 +141,6 @@ async function fetchSolarData() {
         if(originalLoad48) runSimulation();
         
     } catch(err) {
-        console.error("Détail du crash météo :", err);
         statusLabel.innerText = `⚠️ Erreur réseau : Modèles solaires de secours activés.`;
         irradianceSeasons.winter = [0,0,0,0,0,0,0,0,10,100,250,400,450,400,250,100,10,0,0,0,0,0,0,0];
         irradianceSeasons.spring = [0,0,0,0,0,0,10,80,200,400,600,750,800,750,600,400,200,80,10,0,0,0,0,0];
@@ -154,7 +149,7 @@ async function fetchSolarData() {
     }
 }
 
-// --- 4. MOTEUR DE CALCUL (FONCTION ISOLÉE POUR 1 JOUR) ---
+// --- 4. MOTEUR DE CALCUL ---
 function simulateDay(irradiance24_array, overrideC = null, overrideP = null) {
     const C = overrideC !== null ? overrideC : parseFloat(document.getElementById('cap').value);
     const P = overrideP !== null ? overrideP : parseFloat(document.getElementById('pow').value);
@@ -163,11 +158,8 @@ function simulateDay(irradiance24_array, overrideC = null, overrideP = null) {
     const PV = parseFloat(document.getElementById('pv').value);
     const Area = parseFloat(document.getElementById('area').value);
     
-    // NOUVEAU : On récupère le rendement depuis l'UI (ex: 90%)
     const rteGlobal = parseFloat(document.getElementById('rte').value) / 100;
-
     const peakPower = 0.05; 
-    // Calcul automatique du rendement asymétrique (racine carrée du RTE)
     const eta = Math.sqrt(rteGlobal);
 
     let solarProd48 = new Array(48).fill(0), netLoad48 = new Array(48).fill(0), finalGridLoad48 = new Array(48).fill(0);
@@ -175,7 +167,6 @@ function simulateDay(irradiance24_array, overrideC = null, overrideP = null) {
     const hc_steps = Array.from({length: 12}, (_, i) => i);
     const hp_steps = Array.from({length: 36}, (_, i) => i + 12);
 
-    // 1. Production Solaire & Charge de l'excédent
     for(let i=0; i<48; i++) {
         let rawLoad = originalLoad48[i] * Area * peakPower; 
         let hour = Math.floor(i / 2);
@@ -185,14 +176,12 @@ function simulateDay(irradiance24_array, overrideC = null, overrideP = null) {
         
         if(netLoad48[i] < 0) { 
             let surplusPower = Math.abs(netLoad48[i]);
-            // On limite la charge par P, et par la place restante divisée par le rendement
             let chargePower = Math.min(surplusPower, P, (C - soc) / (0.5 * eta));
-            soc += chargePower * 0.5 * eta; // Seule une partie de l'énergie entre réellement dans la batterie
+            soc += chargePower * 0.5 * eta; 
             finalGridLoad48[i] += chargePower; 
         }
     }
 
-    // 2. Recharge forcée sur le réseau (Heures Creuses)
     for(let i of hc_steps) { 
         if(finalGridLoad48[i] > 0) {
             let chargePower = Math.min(P, (C - soc) / (0.5 * eta));
@@ -201,7 +190,6 @@ function simulateDay(irradiance24_array, overrideC = null, overrideP = null) {
         }
     }
 
-    // 3. Calcul du seuil optimal d'écrêtement (Recherche Dichotomique)
     let maxInitialPeak = Math.max(...finalGridLoad48.filter((_, i) => hp_steps.includes(i)));
     let minPossiblePeak = 0, targetLimit = maxInitialPeak;
 
@@ -210,7 +198,6 @@ function simulateDay(irradiance24_array, overrideC = null, overrideP = null) {
         let energyNeeded_kWh = 0;
         for(let i of hp_steps) {
             if(finalGridLoad48[i] > mid) {
-                // Pour fournir "X" kW au réseau, la batterie doit fournir "X / eta" kW en interne
                 energyNeeded_kWh += Math.min(P, finalGridLoad48[i] - mid) * 0.5 / eta;
             }
         }
@@ -218,32 +205,26 @@ function simulateDay(irradiance24_array, overrideC = null, overrideP = null) {
         else { minPossiblePeak = mid; }
     }
 
-    // 4. Décharge réelle pour l'écrêtement
     for(let i of hp_steps) {
         if(finalGridLoad48[i] > targetLimit && soc > 0) {
-            // La puissance max restituable est bridée par le rendement à la décharge
             let dischargePower = Math.min((soc * eta) / 0.5, P, finalGridLoad48[i] - targetLimit);
-            soc -= (dischargePower * 0.5) / eta; // La batterie se vide plus vite que ce qu'elle donne
+            soc -= (dischargePower * 0.5) / eta; 
             finalGridLoad48[i] -= dischargePower;
         }
     }
 
-    // 5. Calculs financiers
-  let costOld = 0, costNew = 0, feedInRevenue = 0;
+    let costOld = 0, costNew = 0, feedInRevenue = 0;
     const feedInTariff = parseFloat(document.getElementById('feedin').value);
 
     for(let i=0; i<48; i++) {
         let tarif = hc_steps.includes(i) ? tHC : tHP;
         let rawLoad = originalLoad48[i] * Area * peakPower; 
         
-        // Ancienne facture (sans solaire ni batterie)
         costOld += (rawLoad * 0.5) * tarif; 
         
         if(finalGridLoad48[i] > 0) {
-            // Soutirage au réseau (Nouvelle facture)
             costNew += (finalGridLoad48[i] * 0.5) * tarif;
         } else if (finalGridLoad48[i] < 0) {
-            // L'énergie résiduelle négative est l'excédent injecté sur le réseau
             feedInRevenue += Math.abs(finalGridLoad48[i] * 0.5) * feedInTariff;
         }
     }
@@ -251,25 +232,21 @@ function simulateDay(irradiance24_array, overrideC = null, overrideP = null) {
     let peakOld = Math.max(...originalLoad48.map(v => v * Area * peakPower));
     let peakNew = Math.max(...finalGridLoad48);
     
-    // L'économie totale = (Ancienne facture - Nouvelle facture) + Revenus d'injection PV
     const dailyTotalSavings = (costOld - costNew) + feedInRevenue;
 
     return { dailyEnergySavings: dailyTotalSavings, peakOld, peakNew, solarProd48, finalGridLoad48 };
 }
 
-// --- 5. ALGORITHME PRINCIPAL ET PONDÉRATION ANNUELLE ---
+// --- 5. ALGORITHME PRINCIPAL ---
 function runSimulation() {
     if(!originalLoad48 || !irradianceSeasons.summer) return;
 
-    // Simulation des 3 journées types
     const resWinter = simulateDay(irradianceSeasons.winter);
     const resSpring = simulateDay(irradianceSeasons.spring);
     const resSummer = simulateDay(irradianceSeasons.summer);
 
-    // Pondération annuelle (Gains énergie + Revente PV)
     const annualEnergySavings = (resWinter.dailyEnergySavings * 90) + (resSpring.dailyEnergySavings * 183) + (resSummer.dailyEnergySavings * 92);
     
-    // Calcul des gains sur l'écrêtement (TURPE)
     const pCost = parseFloat(document.getElementById('pcost').value);
     const maxGlobalOldPeak = Math.max(resWinter.peakOld, resSpring.peakOld, resSummer.peakOld);
     const maxGlobalNewPeak = Math.max(resWinter.peakNew, resSpring.peakNew, resSummer.peakNew);
@@ -277,7 +254,6 @@ function runSimulation() {
 
     const totalSavingsY1 = annualEnergySavings + annualPeakSavings; 
     
-    // CAPEX
     const C = parseFloat(document.getElementById('cap').value);
     const costPerKwh = parseFloat(document.getElementById('cost').value);
     const capex = C * costPerKwh; 
@@ -285,7 +261,6 @@ function runSimulation() {
     let cumulativeSavings = 0;
     let roi = 0;
     
-    // NOUVEAU : Récupération de la durée et de l'OPEX depuis l'interface
     const maxYears = parseInt(document.getElementById('duration').value);
     const annualOpex = capex * (parseFloat(document.getElementById('opex').value) / 100);
 
@@ -294,18 +269,14 @@ function runSimulation() {
             let degradation = Math.pow(0.98, year - 1);
             let inflation = Math.pow(1.03, year - 1);
             
-            // Gain de l'année = Économies (avec vieillissement/inflation) - Frais de maintenance
             let netSavingsThisYear = (totalSavingsY1 * degradation * inflation) - annualOpex;
             
-            // CHOC FINANCIER : Remplacement des cellules LFP à l'année 15 (60% du CAPEX initial)
             if (year === 15) {
                 netSavingsThisYear -= (capex * 0.60);
             }
             
-            // Calcul précis du ROI (croisement de la ligne de rentabilité)
             if (roi === 0 && cumulativeSavings + netSavingsThisYear >= capex) {
                 let remainingToPay = capex - cumulativeSavings;
-                // On s'assure de ne pas diviser par un chiffre négatif si l'année 15 plombe le cashflow
                 if(netSavingsThisYear > 0) {
                     roi = (year - 1) + (remainingToPay / netSavingsThisYear);
                 }
@@ -314,14 +285,11 @@ function runSimulation() {
         }
     }
 
-    // Mise à jour de l'interface financière
     const fmt = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
     document.getElementById('res-capex').innerText = fmt.format(capex);
-    // On affiche le gain de la 1ère année NET d'OPEX
     document.getElementById('res-savings').innerText = fmt.format(totalSavingsY1 - annualOpex);
     document.getElementById('res-roi').innerText = (roi > 0) ? roi.toFixed(1) + ' ans' : '> ' + maxYears + ' ans';
 
-    // Mise à jour du graphique des courbes
     const selectedSeason = document.getElementById('season').value;
     const dataToDisplay = selectedSeason === 'winter' ? resWinter : (selectedSeason === 'spring' ? resSpring : resSummer);
     
@@ -332,14 +300,12 @@ function runSimulation() {
     batChart.update();
 }
 
-// Lancement au chargement de la page
 window.onload = () => { 
     loadLocalEnedisData(); 
     fetchSolarData();
 };
 
-
-// --- 6. MODULE D'OPTIMISATION (GAINS NETS CUMULÉS) ---
+// --- 6. MODULE D'OPTIMISATION ---
 let optChartInstance = null;
 
 document.getElementById('btn-optimize').addEventListener('click', () => {
@@ -351,20 +317,18 @@ document.getElementById('btn-optimize').addEventListener('click', () => {
     const btn = document.getElementById('btn-optimize');
     btn.innerText = "⏳ Calcul de 40 scénarios en cours...";
     
-    // On utilise un setTimeout pour laisser le bouton s'actualiser avant de geler le navigateur avec les calculs
     setTimeout(() => {
         let results = [];
         let bestCap = 0;
-        let bestProfit = -Infinity; // On cherche le profit maximum
+        let bestProfit = -Infinity; 
 
         const costPerKwh = parseFloat(document.getElementById('cost').value);
         const pCost = parseFloat(document.getElementById('pcost').value);
         const maxYears = parseInt(document.getElementById('duration').value);
         const opexRate = parseFloat(document.getElementById('opex').value) / 100;
 
-        // Boucle : Teste les batteries de 50 kWh à 2000 kWh
         for(let testC = 50; testC <= 2000; testC += 50) {
-            let testP = testC * 0.5; // Ratio de puissance (C-Rate 0.5)
+            let testP = testC * 0.5; 
             
             const resW = simulateDay(irradianceSeasons.winter, testC, testP);
             const resSp = simulateDay(irradianceSeasons.spring, testC, testP);
@@ -381,13 +345,11 @@ document.getElementById('btn-optimize').addEventListener('click', () => {
             
             let cumulativeSavings = 0;
             
-            // Simulation des gains cumulés sur toute la durée du projet
             for (let year = 1; year <= maxYears; year++) {
                 let degradation = Math.pow(0.98, year - 1);
                 let inflation = Math.pow(1.03, year - 1);
                 let netSavingsThisYear = (totalSavingsY1 * degradation * inflation) - annualOpex;
                 
-                // Renouvellement cellules (Repowering)
                 if (year === 15) {
                     netSavingsThisYear -= (capex * 0.60);
                 }
@@ -395,9 +357,7 @@ document.getElementById('btn-optimize').addEventListener('click', () => {
                 cumulativeSavings += netSavingsThisYear;
             }
 
-            // Bénéfice net final = Tout ce qu'on a gagné - Le prix de la batterie
             let netProfit = cumulativeSavings - capex;
-
             results.push({ capacity: testC, profit: netProfit });
             
             if(netProfit > bestProfit) {
@@ -433,7 +393,7 @@ function afficherModaleOptimisation(results, bestCap, bestProfit) {
             datasets: [{
                 label: `Gains Nets sur ${maxYears} ans (€)`,
                 data: results.map(r => r.profit),
-                backgroundColor: results.map(r => r.capacity === bestCap ? '#10b981' : '#cbd5e1'), // Vert émeraude pour le gagnant
+                backgroundColor: results.map(r => r.capacity === bestCap ? '#10b981' : '#cbd5e1'), 
                 borderRadius: 4
             }]
         },
@@ -444,19 +404,13 @@ function afficherModaleOptimisation(results, bestCap, bestProfit) {
                 tooltip: { callbacks: { label: (context) => `Gain Net : ${fmt.format(context.raw)}` } }
             },
             scales: { 
-                y: { 
-                    title: { display: true, text: 'Euros (€)' },
-                    grid: { color: '#f1f5f9' }
-                },
-                x: {
-                    grid: { display: false }
-                }
+                y: { title: { display: true, text: 'Euros (€)' }, grid: { color: '#f1f5f9' } },
+                x: { grid: { display: false } }
             }
         }
     });
 }
 
-// --- FERMETURE DE LA MODALE ---
 const btnCloseModal = document.getElementById('close-modal');
 if (btnCloseModal) {
     btnCloseModal.addEventListener('click', () => {
@@ -479,11 +433,9 @@ if (btnReadme) {
             const response = await fetch('README.md');
             if (response.ok) {
                 const text = await response.text();
-                // Vérifie si marked est bien disponible
                 if (typeof marked !== 'undefined') {
                     readmeContent.innerHTML = marked.parse(text);
                     
-                    // Ajout du style imitant GitHub
                     const style = document.createElement('style');
                     style.innerHTML = `
                         #readme-content { font-size: 15px; line-height: 1.7; color: #334155; }
@@ -512,7 +464,6 @@ if (btnReadme) {
     });
 }
 
-// Gestion de la fermeture
 if (closeReadmeBtn) {
     closeReadmeBtn.addEventListener('click', () => { readmeModal.style.display = 'none'; });
 }
