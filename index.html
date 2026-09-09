@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BatOpt : Simulateur Technico-Économique BESS</title>
+    <!-- On lie votre beau fichier CSS d'origine -->
+    <link rel="stylesheet" href="style.css"> 
+</head>
+<body>
+
+    <header>
+            <h1>BatOpt : Simulateur Technico-Économique BESS</h1>
+            <p>Dimensionnement intelligent et optimisation du ROI pour projets BESS</p>
+        </header>
+
+        <!-- Et on laisse le reste de votre container tel quel -->
+        <div class="container">
+            
+            <!-- PANNEAU DE GAUCHE (.controls) -->
+            <div class="controls">
+                
+                <h3>🏢 Bâtiment (Profil Enedis)</h3>
+            <div class="control-group">
+                <label for="profile" style="align-items: center;">
+                    Type d'activité :
+                    <span class="info-icon" data-tooltip="Modélisation basée sur les profils types Enedis (jours ouvrés types)">i</span>
+                </label>
+                <select id="profile">
+                    <option value="" disabled selected>-- Sélectionnez une activité --</option>
+                    <option value="ENT1">🛒 Supermarché (Profil ENT1)</option>
+                    <option value="ENT2">🏭 Atelier / Usine (Profil ENT2)</option>
+                    <option value="PRO2">🏢 Bureaux (Profil PRO2)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="area"><span>Surface (m²) :</span> <span id="area-val">1500</span></label>
+                <input type="range" id="area" min="100" max="10000" step="100" value="1500">
+            </div>
+            <!-- LA SECTION BATIMENT S'ARRETE ICI. AUCUN BOUTON LOUPE ICI. -->
+
+            <h3>🌍 Localisation & Climat</h3>
+            <div class="control-group">
+                <label for="city-input">Ville d'implantation :</label>
+                <div class="search-box">
+                    <input type="text" id="city-input" placeholder="Ex: Lyon">
+                    <button type="button" id="btn-search-city">🔍</button> <!-- La loupe est bien ici -->
+                </div>
+                <small id="city-result" style="display: block; margin-top: 5px; color: #7f8c8d;">📍 En attente...</small>
+            </div>
+
+            <div class="control-group">
+                <label for="season">Tendance Météo (5 ans) :</label>
+                <select id="season">
+                    <option value="summer">☀️ Tendance Été (Juin - Juil - Août)</option>
+                    <option value="winter">❄️ Tendance Hiver (Déc - Jan - Fév)</option>
+                    <option value="spring">🌱 Mi-saison (Printemps & Automne)</option>
+                </select>
+            </div>
+
+            <h3>☀️ Solaire & 🔋 Batterie</h3>
+            <div class="control-group">
+                <label for="pv"><span>Puissance PV (kWc) :</span> <span id="pv-val">100</span></label>
+                <input type="range" id="pv" min="0" max="1000" step="10" value="100">
+            </div>
+
+            <div class="control-group">
+                <label for="cap"><span>Capacité Batterie (kWh) :</span> <span id="cap-val">500</span></label>
+                <input type="range" id="cap" min="50" max="2000" step="50" value="500">
+            </div>
+            
+            <div class="control-group">
+                <label for="pow"><span>Puissance Batterie (kW) :</span> <span id="pow-val">250</span></label>
+                <input type="range" id="pow" min="25" max="1000" step="25" value="250">
+            </div>
+
+            <div class="control-group">
+                <label for="cost"><span>Coût Batterie (€/kWh) :</span> <span id="cost-val">400</span></label>
+                <input type="range" id="cost" min="150" max="800" step="10" value="400">
+            </div>
+
+            <h3>💰 Tarification</h3>
+            <div class="control-group">
+                <label for="thp"><span>Tarif Heures Pleines (€/kWh) :</span> <span id="thp-val">0.18</span></label>
+                <input type="range" id="thp" min="0.05" max="0.40" step="0.01" value="0.18">
+            </div>
+
+            <div class="control-group">
+                <label for="thc"><span>Tarif Heures Creuses (€/kWh) :</span> <span id="thc-val">0.12</span></label>
+                <input type="range" id="thc" min="0.03" max="0.25" step="0.01" value="0.12">
+            </div>
+
+            <div class="control-group">
+                <label for="pcost"><span>Coût Puissance Souscrite (€/kW/an) : <span class="info-icon" data-tooltip="Composante TURPE liée à la puissance souscrite : plus le pic de consommation est écrêté, plus cette prime baisse.">i</span></span> <span id="pcost-val">20</span></label>
+                <input type="range" id="pcost" min="0" max="100" step="1" value="20">
+            </div>
+
+            <!--PARAMÈTRES AVANCÉS -->
+            <h3>⚙️ Paramètres Avancés</h3>
+            <div class="control-group">
+                <label for="rte">
+                    <span>Rendement Batterie (Round Trip Efficiency %) : <span class="info-icon tooltip-right" data-tooltip="Round-Trip Efficiency : Rendement global aller-retour (cycle de charge et décharge), tenant compte des pertes thermiques et de conversion de l'onduleur.">i</span></span>
+                    <span id="rte-val">90</span>
+                </label>
+                <input type="range" id="rte" min="70" max="100" step="1" value="90">
+            </div>
+
+            <!-- NOUVEAU CURSEUR : TARIF DE RACHAT -->
+            <div class="control-group">
+                <label for="feedin">
+                    <span>Tarif de revente PV (€/kWh) : <span class="info-icon tooltip-right" data-tooltip="Valorisation de l'excédent solaire injecté sur le réseau lorsque la batterie est pleine et que la consommation du bâtiment est nulle.">i</span></span> 
+                    <span id="feedin-val">0.05</span>
+                </label>
+                <input type="range" id="feedin" min="0.00" max="0.20" step="0.01" value="0.05">
+            </div>
+
+            <!-- BOUTON D'OPTIMISATION -->
+            <button id="btn-optimize" style="width: 100%; padding: 12px; margin-bottom: 10px; background-color: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1em;">
+                Trouver le dimensionnement optimal
+            </button>
+
+            <!-- DURÉE ET OPEX -->
+            <div class="control-group">
+                <label for="duration"><span>Durée du projet (Années) :</span> <span id="duration-val">25</span></label>
+                <input type="range" id="duration" min="10" max="25" step="1" value="25">
+            </div>
+
+            <div class="control-group">
+                <label for="opex">
+                    <span>OPEX (% CAPEX / an) : <span class="info-icon tooltip-right" data-tooltip="Frais annuels de maintenance, de supervision et d'assurance.">i</span></span> 
+                    <span id="opex-val">1.5</span>
+                </label>
+                <input type="range" id="opex" min="0" max="5" step="0.1" value="1.5">
+            </div>
+
+        </div>
+
+        <!-- PANNEAU DE DROITE (.results-section) -->
+        <div class="results-section">
+            
+            <div class="kpi-dashboard">
+                <div class="kpi card-capex">
+                    <h4>CAPEX (BATTERIE)</h4>
+                    <p id="res-capex">0 €</p>
+                </div>
+                <div class="kpi card-savings">
+                    <h4>GAINS ANNUELS</h4>
+                    <p id="res-savings">0 €</p>
+                </div>
+                <div class="kpi card-roi">
+                    <h4>PAYBACK (ROI)</h4>
+                    <p id="res-roi">0 ans</p>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div style="position: relative; height: calc(100% - 30px); width: 100%;">
+                    <canvas id="loadChart"></canvas>
+                </div>
+                <div id="data-source-status" style="text-align: right; margin-top: 5px; font-size: 0.9em; font-weight: bold; color: var(--secondary);">⚠️ En attente : Veuillez sélectionner un type d'activité.</div>
+            </div>
+
+        </div>
+        
+    </div> 
+    <!-- ========================================== -->
+    <!-- FIN DE LA ZONE CAPTURÉE POUR LE PDF        -->
+    <!-- ========================================== -->
+
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+
+<!-- MODALE D'OPTIMISATION (CORRIGÉE POUR PETITS ÉCRANS) -->
+    <div id="opt-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+        
+        <!-- CORRECTION 1 : max-height: 90vh et overflow-y: auto ajoutés ici -->
+        <div style="background: var(--bg-card, #ffffff); width: 90%; max-width: 900px; max-height: 90vh; overflow-y: auto; padding: 25px; border-radius: 12px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+            
+            <!-- Votre bouton de fermeture qui fonctionne -->
+            <button id="close-modal" onclick="document.getElementById('opt-modal').style.display='none'" style="position: absolute; top: 10px; right: 15px; border: none; background: transparent; font-size: 2em; cursor: pointer; color: #64748b; z-index: 9999;">✖</button>
+            
+            <h2 style="color: var(--primary, #1e293b); margin-top: 0; margin-bottom: 5px;">Optimisation du Dimensionnement</h2>
+            <p style="color: var(--text-muted, #64748b); margin-bottom: 15px; font-size: 0.9em;">Recherche du profit total maximum sur la durée du projet.</p>
+            
+            <!-- CORRECTION 2 : Hauteur dynamique (vh) avec min/max -->
+            <div style="position: relative; height: 45vh; min-height: 250px; max-height: 350px; width: 100%;">
+                <canvas id="optChart"></canvas>
+            </div>
+            
+            <div id="opt-result" style="margin-top: 15px; padding: 15px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534; font-weight: bold; text-align: center; font-size: 1.05em;">
+                <!-- Le résultat s'affichera ici -->
+            </div>
+            
+        </div>
+    </div>
+</body>
+</html>

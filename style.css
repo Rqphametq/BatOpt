@@ -1,0 +1,329 @@
+/* --- 1. IMPORT DE LA POLICE ET VARIABLES --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    /* Palette SaaS Moderne */
+    --bg-app: #f8fafc;        /* Gris perle très léger pour le fond */
+    --bg-card: #ffffff;       /* Blanc pur pour les modules */
+    --text-main: #334155;     /* Gris ardoise (moins agressif que le noir) */
+    --text-muted: #64748b;    /* Gris secondaire pour les labels */
+    --border-color: #e2e8f0;  /* Bordures très douces */
+    
+    /* Couleurs d'accentuation */
+    --primary: #0f172a;       /* Bleu nuit très sombre pour les actions principales */
+    --accent: #3b82f6;        /* Bleu électrique pour les curseurs et focus */
+    --success: #10b981;       /* Vert émeraude pour les gains */
+    --danger: #ef4444;        /* Rouge corail pour les coûts/alertes */
+    
+    /* Ombres subtiles */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+/* --- 2. RESET ET STRUCTURE DE BASE --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-app);
+    color: var(--text-main);
+    line-height: 1.5;
+}
+
+/* --- 3. EN-TÊTE (MINIMALISTE) --- */
+header {
+    background-color: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    padding: 20px 40px;
+    text-align: left;
+    box-shadow: var(--shadow-sm);
+}
+
+header h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.025em;
+}
+
+header p {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 400;
+}
+
+/* --- 4. MISE EN PAGE PRINCIPALE --- */
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 30px;
+    gap: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Panneau de contrôle (Gauche) */
+.controls {
+    flex: 1;
+    min-width: 320px;
+    max-width: 400px;
+    background: var(--bg-card);
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+
+/* Titres de sections */
+.controls h3 {
+    margin-top: 32px;
+    margin-bottom: 20px;
+    color: var(--primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: none; /* Suppression de la vieille ligne */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.controls h3:first-child { margin-top: 0; }
+
+/* Groupes de contrôles */
+.control-group { 
+    margin-bottom: 20px; 
+}
+
+.control-group label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.control-group label span:last-child {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+/* --- 5. CHAMPS DE SAISIE ET MENUS DÉROULANTS --- */
+select, .search-box input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-app);
+    color: var(--text-main);
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    appearance: none; /* Retire le style par défaut lourd */
+}
+
+select {
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748b%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px top 50%;
+    background-size: 10px auto;
+}
+
+select:focus, .search-box input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background-color: var(--bg-card);
+}
+
+/* Bouton Recherche */
+.search-box { display: flex; gap: 8px; }
+.search-box button {
+    padding: 8px 16px;
+    cursor: pointer;
+    background: #f1f5f9;
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+.search-box button:hover { background: #e2e8f0; }
+
+/* --- 6. DESIGN DES SLIDERS (LE DÉTAIL PRO) --- */
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+    padding: 8px 0;
+}
+input[type=range]:focus { outline: none; }
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 6px;
+    cursor: pointer;
+    background: var(--border-color);
+    border-radius: 999px;
+}
+input[type=range]::-webkit-slider-thumb {
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid var(--accent);
+    cursor: pointer;
+    -webkit-appearance: none;
+    margin-top: -6px;
+    box-shadow: var(--shadow-sm);
+}
+
+/* --- 7. SECTION DES RÉSULTATS (DROITE) --- */
+.results-section {
+    flex: 2;
+    min-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    /* --- L'EFFET MAGIQUE EST DÉPLACÉ ICI --- */
+    position: sticky;
+    top: 20px; /* Laisse une belle marge de 20px en haut de l'écran */
+    align-self: flex-start; /* Indispensable pour que la colonne puisse glisser ! */
+}
+
+/* KPIs Dashboard (On lui enlève son effet collant, car son parent s'en charge maintenant) */
+.kpi-dashboard {
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+}
+.kpi {
+    flex: 1;
+    background: var(--bg-card);
+    padding: 16px 20px; /* Marges réduites pour gagner de la hauteur */
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+    text-align: left;
+}
+
+/* ... (Les règles .kpi h4 et .kpi p restent les mêmes) ... */
+.kpi h4 { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+.kpi p { font-size: 2rem; font-weight: 700; margin-top: 8px; letter-spacing: -0.025em; }
+
+/* Couleurs spécifiques des KPIs */
+.card-capex p { color: var(--primary); }
+.card-savings p { color: var(--success); }
+.card-roi p { color: var(--accent); }
+
+/* Zone du Graphique (Hauteur optimisée pour PC Portable) */
+.chart-container {
+    background: var(--bg-card);
+    padding: 20px; /* Légèrement réduit */
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+    height: 420px; /* 420px au lieu de 520px pour tout voir d'un coup ! */
+}
+
+/* Statut des données */
+#data-source-status {
+    text-align: right; 
+    margin-top: 12px; 
+    font-size: 0.85rem; 
+    font-weight: 500; 
+    color: var(--text-muted);
+}
+
+/* --- 8. BOUTON D'EXPORT PDF --- */
+#btn-export-pdf {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+#btn-export-pdf:hover { background-color: #1e293b; }
+#btn-export-pdf:active { transform: scale(0.98); }
+
+/* --- 9. INFOBULLES (TOOLTIPS) --- */
+.info-icon {
+    cursor: help;
+    font-size: 0.75rem;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    background: var(--border-color);
+    color: var(--text-muted);
+    border-radius: 50%;
+    margin-left: 6px;
+    font-weight: bold;
+}
+
+.info-icon:hover {
+    background: var(--text-muted);
+    color: white;
+}
+
+.info-icon:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 150%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--primary);
+    color: #ffffff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.5;
+    white-space: normal;
+    width: 240px;
+    z-index: 100;
+    box-shadow: var(--shadow-md);
+    pointer-events: none;
+    text-align: center;
+}
+
+.info-icon:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--primary) transparent transparent transparent;
+    z-index: 100;
+}
+
+/* Responsive design basique */
+@media (max-width: 900px) {
+    .container { flex-direction: column; padding: 15px; }
+    .controls { max-width: 100%; }
+    .results-section { min-width: 100%; }
+    .kpi-dashboard { flex-direction: column; gap: 15px; }
+}
+
+/* Variante pour les infobulles proches du bord gauche */
+.info-icon.tooltip-right:hover::after {
+    left: 50%;
+    transform: translateX(-15%); /* Pousse la majorité de la bulle vers la droite */
+}
