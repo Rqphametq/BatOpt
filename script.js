@@ -475,13 +475,33 @@ if (btnReadme) {
         readmeModal.style.display = 'flex';
         readmeContent.innerHTML = "⏳ Chargement de la documentation...";
         
-        try {
+    try {
             const response = await fetch('README.md');
             if (response.ok) {
                 const text = await response.text();
                 // Vérifie si marked est bien disponible
                 if (typeof marked !== 'undefined') {
                     readmeContent.innerHTML = marked.parse(text);
+                    
+                    // --- AJOUT DU STYLE ICI ---
+                    const style = document.createElement('style');
+                    style.innerHTML = `
+                        #readme-content { font-size: 15px; line-height: 1.7; color: #334155; }
+                        #readme-content h1, #readme-content h2, #readme-content h3 { color: #0f172a; margin-top: 2em; margin-bottom: 0.8em; font-weight: 600; }
+                        #readme-content h1 { border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-top: 0.5em; }
+                        #readme-content p { margin-bottom: 1.2em; }
+                        #readme-content ul, #readme-content ol { margin-left: 20px; margin-bottom: 1.5em; padding-left: 10px; }
+                        #readme-content li { margin-bottom: 8px; }
+                        #readme-content blockquote { border-left: 4px solid #cbd5e1; color: #64748b; padding-left: 16px; margin: 1.5em 0; }
+                        #readme-content code { background: #f1f5f9; padding: 3px 6px; border-radius: 4px; font-family: monospace; color: #db2777; font-size: 0.9em; }
+                        #readme-content pre { background: #1e293b; color: #f8fafc; padding: 16px; border-radius: 8px; overflow-x: auto; margin-bottom: 1.5em; }
+                        #readme-content pre code { background: transparent; color: inherit; padding: 0; }
+                        #readme-content a { color: #3b82f6; text-decoration: none; }
+                        #readme-content a:hover { text-decoration: underline; }
+                    `;
+                    readmeContent.appendChild(style);
+                    // --------------------------
+
                 } else {
                     readmeContent.innerHTML = `<pre style="white-space: pre-wrap;">${text}</pre>`;
                 }
@@ -491,8 +511,6 @@ if (btnReadme) {
         } catch(e) {
             readmeContent.innerHTML = "<p>❌ Erreur technique lors du chargement de la documentation.</p>";
         }
-    });
-}
 
 // Gestion de la fermeture
 if (closeReadmeBtn) {
