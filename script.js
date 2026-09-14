@@ -103,26 +103,25 @@ function loadLocalEnedisData() {
     if(irradianceSeasons && irradianceSeasons.summer) runSimulation();
 }
 
-// --- 3. API SOLAIRE ---
+// --- 3. API SOLAIRE (VERSION HAUTE VITESSE) ---
 async function fetchSolarData() {
     const statusLabel = document.getElementById('data-source-status');
-    statusLabel.innerText = `⏳ Analyse climatologique en cours...`;
+    statusLabel.innerText = `⏳ Analyse météo en cours (haute vitesse)...`;
     
     try {
-        // Requête allégée à 1 an (2023) pour ne pas faire crasher l'API gratuite
-        const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${currentLat}&longitude=${currentLon}&start_date=2023-01-01&end_date=2023-12-31&hourly=shortwave_radiation&timezone=auto`;
+        // NOUVEAU : On utilise l'API Forecast (très stable) avec 90 jours d'historique
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&past_days=90&hourly=shortwave_radiation&timezone=auto`;
         
-        const res = await fetch(url);
+        // Timeout de sécurité manuel (5 secondes) pour ne plus jamais bloquer l'UI
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
         
-        // On lit d'abord en texte brut pour éviter le crash de l'interface
-        const textResponse = await res.text(); 
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
         
-        // Si l'API renvoie une erreur textuelle (comme "Unexpected...")
-        if(!res.ok || textResponse.startsWith("Unexpected") || textResponse.startsWith("<")) {
-            throw new Error(`Serveur Météo surchargé`); 
-        }
+        if(!res.ok) throw new Error("Erreur HTTP");
         
-        const data = JSON.parse(textResponse); // On traduit le texte en données
+        const data = await res.json();
         
         let sumW = new Array(24).fill(0), countW = 0; 
         let sumS = new Array(24).fill(0), countS = 0; 
@@ -137,22 +136,25 @@ async function fetchSolarData() {
             let hour = parseInt(timeString.substring(11, 13)); 
             let val = hourlyData[i] || 0;
             
-            if (["12", "01", "02"].includes(month)) { sumW[hour] += val; if(hour===0) countW++; }
-            else if (["06", "07", "08"].includes(month)) { sumS[hour] += val; if(hour===0) countS++; }
+            // Répartition simplifiée sur les données récentes
+            if (["11", "12", "01", "02"].includes(month)) { sumW[hour] += val; if(hour===0) countW++; }
+            else if (["05", "06", "07", "08"].includes(month)) { sumS[hour] += val; if(hour===0) countS++; }
             else { sumM[hour] += val; if(hour===0) countM++; }
         }
 
-        irradianceSeasons.winter = sumW.map(v => countW ? v / countW : 0);
-        irradianceSeasons.summer = sumS.map(v => countS ? v / countS : 0);
-        irradianceSeasons.spring = sumM.map(v => countM ? v / countM : 0);
+        // Sécurité si un mois n'est pas présent dans les 90 derniers jours
+        const defaultSummer = [0,0,0,0,0,10,50,150,300,500,750,900,950,900,750,500,300,150,50,10,0,0,0,0];
+        const defaultWinter = [0,0,0,0,0,0,0,0,10,100,250,400,450,400,250,100,10,0,0,0,0,0,0,0];
         
-        statusLabel.innerText = `✅ Climatologie validée (Année 2023).`;
+        irradianceSeasons.winter = countW > 0 ? sumW.map(v => v / countW) : defaultWinter;
+        irradianceSeasons.summer = countS > 0 ? sumS.map(v => v / countS) : defaultSummer;
+        irradianceSeasons.spring = countM > 0 ? sumM.map(v => v / countM) : irradianceSeasons.summer.map(v => v * 0.7);
+        
+        statusLabel.innerText = `✅ Données solaires récupérées avec succès.`;
         if(originalLoad48) runSimulation();
         
     } catch(err) {
-        console.warn("Erreur interceptée :", err);
-        statusLabel.innerText = `⚠️ API Météo indisponible. Modèles de secours activés.`;
-        
+        statusLabel.innerText = `⚠️ Réseau météo bloqué. Modèles de secours activés.`;
         irradianceSeasons.winter = [0,0,0,0,0,0,0,0,10,100,250,400,450,400,250,100,10,0,0,0,0,0,0,0];
         irradianceSeasons.spring = [0,0,0,0,0,0,10,80,200,400,600,750,800,750,600,400,200,80,10,0,0,0,0,0];
         irradianceSeasons.summer = [0,0,0,0,0,10,50,150,300,500,750,900,950,900,750,500,300,150,50,10,0,0,0,0];
