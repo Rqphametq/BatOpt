@@ -150,7 +150,7 @@ async function fetchSolarData() {
         irradianceSeasons.summer = sumS.map(v => countS ? v / countS : 0);
         irradianceSeasons.spring = sumM.map(v => countM ? v / countM : 0);
         
-        statusLabel.innerText = `✅ Climatologie validée (Moyenne 3 ans : 2021-2023).`;
+        statusLabel.innerText = `✅ Climatologie validée`;
         if(originalLoad48) runSimulation();
         
    } catch(err) {
