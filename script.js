@@ -106,7 +106,7 @@ function loadLocalEnedisData() {
 // --- 3. API SOLAIRE (MOYENNE 3 ANS) ---
 async function fetchSolarData() {
     const statusLabel = document.getElementById('data-source-status');
-    statusLabel.innerText = `⏳ Analyse climatologique en cours (Moyenne sur 3 ans)...`;
+    statusLabel.innerText = `⏳ Analyse climatologique en cours ...`;
     
     try {
         // Requête sur 3 ans (2021 à 2023) : le compromis parfait précision / rapidité
@@ -153,12 +153,24 @@ async function fetchSolarData() {
         statusLabel.innerText = `✅ Climatologie validée (Moyenne 3 ans : 2021-2023).`;
         if(originalLoad48) runSimulation();
         
-    } catch(err) {
+   } catch(err) {
         console.warn("Erreur météo interceptée :", err);
-        statusLabel.innerText = `⚠️ API surchargée : Modèles solaires de secours activés.`;
-        irradianceSeasons.winter = [0,0,0,0,0,0,0,0,10,100,250,400,450,400,250,100,10,0,0,0,0,0,0,0];
-        irradianceSeasons.spring = [0,0,0,0,0,0,10,80,200,400,600,750,800,750,600,400,200,80,10,0,0,0,0,0];
-        irradianceSeasons.summer = [0,0,0,0,0,10,50,150,300,500,750,900,950,900,750,500,300,150,50,10,0,0,0,0];
+        statusLabel.innerText = `⚠️ API surchargée : Modèles solaires géolocalisés (Secours).`;
+        
+        // Calcul d'un coefficient d'ensoleillement basé sur la latitude
+        // Référence Paris (48.85°). Plus on descend au sud, plus le facteur augmente.
+        let latFactor = 1 + ((48.85 - currentLat) * 0.04); 
+        
+        // Courbes de référence (Base Paris)
+        const baseWinter = [0,0,0,0,0,0,0,0,10,100,250,400,450,400,250,100,10,0,0,0,0,0,0,0];
+        const baseSpring = [0,0,0,0,0,0,10,80,200,400,600,750,800,750,600,400,200,80,10,0,0,0,0,0];
+        const baseSummer = [0,0,0,0,0,10,50,150,300,500,750,900,950,900,750,500,300,150,50,10,0,0,0,0];
+        
+        // Application du coefficient géographique
+        irradianceSeasons.winter = baseWinter.map(v => v * latFactor);
+        irradianceSeasons.spring = baseSpring.map(v => v * latFactor);
+        irradianceSeasons.summer = baseSummer.map(v => v * latFactor);
+        
         if(originalLoad48) runSimulation();
     }
 }
