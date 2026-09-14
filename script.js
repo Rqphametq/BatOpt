@@ -109,15 +109,20 @@ async function fetchSolarData() {
     statusLabel.innerText = `⏳ Analyse climatologique en cours...`;
     
     try {
-        const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${currentLat}&longitude=${currentLon}&start_date=2019-01-01&end_date=2023-12-31&hourly=shortwave_radiation&timezone=auto`;
+        // Requête allégée à 1 an (2023) pour ne pas faire crasher l'API gratuite
+        const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${currentLat}&longitude=${currentLon}&start_date=2023-01-01&end_date=2023-12-31&hourly=shortwave_radiation&timezone=auto`;
+        
         const res = await fetch(url);
         
-        // NOUVEAU : On capture le code d'erreur exact renvoyé par Open-Meteo
-        if(!res.ok) {
-            throw new Error(`Code HTTP ${res.status}`); 
+        // On lit d'abord en texte brut pour éviter le crash de l'interface
+        const textResponse = await res.text(); 
+        
+        // Si l'API renvoie une erreur textuelle (comme "Unexpected...")
+        if(!res.ok || textResponse.startsWith("Unexpected") || textResponse.startsWith("<")) {
+            throw new Error(`Serveur Météo surchargé`); 
         }
         
-        const data = await res.json();
+        const data = JSON.parse(textResponse); // On traduit le texte en données
         
         let sumW = new Array(24).fill(0), countW = 0; 
         let sumS = new Array(24).fill(0), countS = 0; 
@@ -141,13 +146,12 @@ async function fetchSolarData() {
         irradianceSeasons.summer = sumS.map(v => countS ? v / countS : 0);
         irradianceSeasons.spring = sumM.map(v => countM ? v / countM : 0);
         
-        statusLabel.innerText = `✅ Climatologie annuelle validée (Moyenne 5 ans).`;
-        
+        statusLabel.innerText = `✅ Climatologie validée (Année 2023).`;
         if(originalLoad48) runSimulation();
         
     } catch(err) {
-        // NOUVEAU : On affiche l'erreur exacte directement sur l'interface
-        statusLabel.innerText = `⚠️ Échec de la connexion (${err.message}). Modèles de secours activés.`;
+        console.warn("Erreur interceptée :", err);
+        statusLabel.innerText = `⚠️ API Météo indisponible. Modèles de secours activés.`;
         
         irradianceSeasons.winter = [0,0,0,0,0,0,0,0,10,100,250,400,450,400,250,100,10,0,0,0,0,0,0,0];
         irradianceSeasons.spring = [0,0,0,0,0,0,10,80,200,400,600,750,800,750,600,400,200,80,10,0,0,0,0,0];
