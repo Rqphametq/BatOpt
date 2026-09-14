@@ -106,12 +106,17 @@ function loadLocalEnedisData() {
 // --- 3. API SOLAIRE ---
 async function fetchSolarData() {
     const statusLabel = document.getElementById('data-source-status');
-    statusLabel.innerText = `⏳ Analyse climatologique annuelle en cours (5 ans)...`;
+    statusLabel.innerText = `⏳ Analyse climatologique en cours...`;
     
     try {
         const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${currentLat}&longitude=${currentLon}&start_date=2019-01-01&end_date=2023-12-31&hourly=shortwave_radiation&timezone=auto`;
         const res = await fetch(url);
-        if(!res.ok) throw new Error("Erreur Open-Meteo Archive");
+        
+        // NOUVEAU : On capture le code d'erreur exact renvoyé par Open-Meteo
+        if(!res.ok) {
+            throw new Error(`Code HTTP ${res.status}`); 
+        }
+        
         const data = await res.json();
         
         let sumW = new Array(24).fill(0), countW = 0; 
@@ -141,7 +146,9 @@ async function fetchSolarData() {
         if(originalLoad48) runSimulation();
         
     } catch(err) {
-        statusLabel.innerText = `⚠️ Erreur réseau : Modèles solaires de secours activés.`;
+        // NOUVEAU : On affiche l'erreur exacte directement sur l'interface
+        statusLabel.innerText = `⚠️ Échec de la connexion (${err.message}). Modèles de secours activés.`;
+        
         irradianceSeasons.winter = [0,0,0,0,0,0,0,0,10,100,250,400,450,400,250,100,10,0,0,0,0,0,0,0];
         irradianceSeasons.spring = [0,0,0,0,0,0,10,80,200,400,600,750,800,750,600,400,200,80,10,0,0,0,0,0];
         irradianceSeasons.summer = [0,0,0,0,0,10,50,150,300,500,750,900,950,900,750,500,300,150,50,10,0,0,0,0];
